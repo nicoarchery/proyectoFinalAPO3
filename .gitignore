@@ -1,0 +1,28 @@
+# Carpetas de datos
+data/
+fotosParaProcesar/
+fotosProcesadas/
+outputs/
+fotosparareducir/
+fotosreducidas/
+
+# Python
+.venv/
+venv/
+ENV/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Sistema
+.DS_Store
+.gitignore_backup
