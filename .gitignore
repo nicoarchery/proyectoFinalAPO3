@@ -1,20 +1,33 @@
-# Carpetas de datos
+# Carpetas de datos y entrenamiento
 data/
+outputs/
 fotosParaProcesar/
 fotosProcesadas/
-outputs/
 fotosparareducir/
 fotosreducidas/
 
-# Python
+# Archivos comprimidos
+*.zip
+*.rar
+*.7z
+*.tar.gz
+
+# Entornos virtuales
 .venv/
 venv/
 ENV/
+
+# Python
 __pycache__/
 *.pyc
 *.pyo
 *.egg-info/
 .pytest_cache/
+
+# Archivos IA / Agentes / skills
+.agents/
+.agents/
+skills-lock.json
 
 # IDE
 .vscode/
