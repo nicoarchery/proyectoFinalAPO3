@@ -1,59 +1,29 @@
-\documentclass[twocolumn,10pt]{article}
+\documentclass[conference]{IEEEtran}
 
 \usepackage[utf8]{inputenc}
-\usepackage[spanish]{babel}
+\usepackage[spanish,es-nosectiondot]{babel}
 \usepackage{cite}
 \usepackage{graphicx}
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
 \usepackage{hyperref}
-\usepackage{geometry}
-\usepackage{caption}
-\usepackage{enumitem}
-
-\geometry{
-  left=1.5cm,
-  right=1.5cm,
-  top=1.8cm,
-  bottom=1.8cm,
-  columnsep=0.6cm
-}
 
 \graphicspath{{outputs/figures/}}
-
-\setlength{\parindent}{0pt}
-\setlength{\parskip}{4pt}
 
 \renewcommand{\refname}{Referencias}
 
 \begin{document}
 
-\twocolumn[{
-\begin{center}
-  \vspace{-0.8cm}
-  {\LARGE\bfseries Clasificación Automática de Calidad de Frutas} \\
-  \vspace{0.2cm}
-  {\large Mediante Visión por Computadora y Aprendizaje Automático} \\
-  \vspace{0.3cm}
-  {\small
-    Nicolás \textsc{Jiménez}, Juan David \textsc{Rosero} \\
-    \textsc{Universidad ICESI} --- Facultad de Ingeniería, Diseño y Ciencias Aplicadas \\
-    Programa de Ingeniería de Sistemas --- APO III, Semestre 2026-1 \\
-    \href{mailto:nicolas.jimenez@ejemplo.com}{nicolas.jimenez@ejemplo.com} \\
-    \href{mailto:juan.rosero@ejemplo.com}{juan.rosero@ejemplo.com}
-  }
-  \vspace{0.3cm}
-\end{center}
-}]
+\title{Clasificación Automática de Calidad de Frutas\\Mediante Visión por Computadora y Aprendizaje Automático}
 
-% ===========================================================================
-% 1. TÍTULO
-% ===========================================================================
-% (ya incluido arriba)
+\author{\IEEEauthorblockN{Nicolás Jiménez, Juan David Rosero}
+\IEEEauthorblockA{Universidad ICESI\\
+Facultad de Ingeniería, Diseño y Ciencias Aplicadas\\
+Programa de Ingeniería de Sistemas --- APO III, Semestre 2026-1\\
+\{nicolas.jimenez, juan.rosero\}@ejemplo.com}}
 
-% ===========================================================================
-% 2. RESUMEN
-% ===========================================================================
+\maketitle
+
 \begin{abstract}
 Este trabajo presenta un sistema automático de clasificación de calidad de frutas basado en visión por computadora, utilizando el conjunto de datos \emph{Fruit Quality Classification} complementado con imágenes propias. Se entrenaron y evaluaron tres modelos supervisados: regresión logística, \emph{Random Forest} (RF) y una red neuronal convolucional (CNN). Los resultados muestran que tanto RF como CNN alcanzan una precisión superior al 96\,\% en datos de prueba, con un F1 \emph{macro} de 0.9615 y 0.9605 respectivamente. Se implementó una interfaz gráfica en Streamlit que permite cargar imágenes o capturarlas con la cámara y obtener la clasificación en tiempo real, junto con la cobertura de la fruta en el encuadre. El sistema aborda una necesidad real en el sector agroindustrial: la estandarización de la clasificación manual de productos frescos.
 \end{abstract}
@@ -78,7 +48,7 @@ La estandarización de la clasificación de calidad tiene impacto económico dir
 \section{Fundamentos teóricos}
 
 \subsection{Extracción de características}
-Para el enfoque de aprendizaje tradicional, las imágenes se redimensionan a 64\,\texttimes\,64\,píxeles con relleno para preservar la relación de aspecto. Se extraen histogramas de color RGB (32 bins por canal) junto con la media y desviación estándar de cada canal, produciendo un vector de 102 características por imagen~\cite{histogram_features}.
+Para el enfoque de aprendizaje tradicional, las imágenes se redimensionan a 64\,$\times$\,64\,píxeles con relleno para preservar la relación de aspecto. Se extraen histogramas de color RGB (32 bins por canal) junto con la media y desviación estándar de cada canal, produciendo un vector de 102 características por imagen~\cite{histogram_features}.
 
 \subsection{Random Forest}
 Random Forest~\cite{breiman2001random} es un método de aprendizaje conjunto (\emph{ensemble learning}) basado en la combinación de múltiples árboles de decisión. Fue introducido por Leo Breiman en 2001 como una extensión del \emph{bagging} (Bootstrap Aggregating) que incorpora aleatoriedad tanto en los datos como en las características.
@@ -94,7 +64,7 @@ Para clasificación, cada árbol emite un voto por clase y el bosque selecciona 
 
 \subsubsection*{Ventajas para este problema}
 Para nuestro conjunto de características de histogramas de color (102 dimensiones), Random Forest presenta ventajas decisivas frente a modelos lineales:
-\begin{itemize}[nosep]
+\begin{itemize}
   \item Captura interacciones no lineales entre bins de histograma (por ejemplo, cómo la relación entre el bin de rojo intenso y el bin de marrón indica podredumbre).
   \item No requiere normalización ni escalado de características.
   \item Proporciona una medida directa de importancia de cada característica, permitiendo interpretar qué aspectos cromáticos son más determinantes para la clasificación.
@@ -154,7 +124,7 @@ Total  & 27\,944 & 100\,\% \\
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=\linewidth]{fig_distribucion.pdf}
+\includegraphics[width=\columnwidth]{fig_distribucion.pdf}
 \caption{Distribución de imágenes por clase de calidad.}
 \label{fig:distribucion}
 \end{figure}
@@ -162,7 +132,7 @@ Total  & 27\,944 & 100\,\% \\
 Se observa un desbalanceo significativo: la clase \emph{regular} es 3.1 veces menor que \emph{bueno}. Para mitigarlo, se aplicó SMOTE~\cite{chawla2002smote} sobre el conjunto de entrenamiento, balanceando las tres clases.
 
 \subsection{Arquitectura de la CNN}
-La CNN implementada consta de: entrada (64\texttimes64\texttimes3), Conv2D(32, 3\texttimes3) + BatchNorm + ReLU + MaxPool(2\texttimes2), Conv2D(64, 3\texttimes3) + BatchNorm + ReLU + MaxPool(2\texttimes2), Conv2D(128, 3\texttimes3) + BatchNorm + ReLU + MaxPool(2\texttimes2), Dropout(0.5), Dense(256, ReLU), Dropout(0.3) y Dense(3, Softmax).
+La CNN implementada consta de: entrada (64$\times$64$\times$3), Conv2D(32, 3$\times$3) + BatchNorm + ReLU + MaxPool(2$\times$2), Conv2D(64, 3$\times$3) + BatchNorm + ReLU + MaxPool(2$\times$2), Conv2D(128, 3$\times$3) + BatchNorm + ReLU + MaxPool(2$\times$2), Dropout(0.5), Dense(256, ReLU), Dropout(0.3) y Dense(3, Softmax).
 
 \subsection{Estimación de cobertura}
 Para estimar el tamaño relativo, se aplica detección de bordes mediante Canny~\cite{canny1986computational} seguido de cierre morfológico para obtener el contorno de la fruta. La cobertura se calcula como el área del rectángulo delimitador (\emph{bounding box}) dividida por el área total de la imagen.
@@ -174,7 +144,7 @@ Para estimar el tamaño relativo, se aplica detección de bordes mediante Canny~
 
 \subsection{Modelos tradicionales}
 La regresión logística alcanzó un F1 macro de validación de 0.7363, mientras que Random Forest obtuvo 0.9666 con 200 árboles y profundidad máxima de 20. En el conjunto de prueba, RF logró:
-\begin{itemize}[nosep]
+\begin{itemize}
   \item Accuracy: 96.35\,\%
   \item Precisión macro: 0.9579
   \item Recall macro: 0.9653
@@ -183,21 +153,21 @@ La regresión logística alcanzó un F1 macro de validación de 0.7363, mientras
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=\linewidth]{fig_matriz_confusion_rf.pdf}
+\includegraphics[width=\columnwidth]{fig_matriz_confusion_rf.pdf}
 \caption{Matriz de confusión del modelo Random Forest en el conjunto de prueba.}
 \label{fig:confusion_rf}
 \end{figure}
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=\linewidth]{fig_metricas_clase_rf.pdf}
+\includegraphics[width=\columnwidth]{fig_metricas_clase_rf.pdf}
 \caption{Métricas de precisión, recall y F1 por clase para Random Forest.}
 \label{fig:metricas_rf}
 \end{figure}
 
 \subsection{Red neuronal convolucional}
 La CNN alcanzó tras 20 épocas:
-\begin{itemize}[nosep]
+\begin{itemize}
   \item Accuracy en prueba: 96.35\,\%
   \item Precisión macro: 0.9613
   \item Recall macro: 0.9601
@@ -241,7 +211,7 @@ CNN                 & ---    & 0.9605 \\
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=\linewidth]{fig_roc_rf.pdf}
+\includegraphics[width=\columnwidth]{fig_roc_rf.pdf}
 \caption{Curvas ROC para cada clase — Random Forest.}
 \label{fig:roc_rf}
 \end{figure}
@@ -275,7 +245,7 @@ Se observa que los \emph{histogramas de color} dominan el ranking: los bins de l
 
 \begin{figure}[h]
 \centering
-\includegraphics[width=\linewidth]{fig_importancia_rf.pdf}
+\includegraphics[width=\columnwidth]{fig_importancia_rf.pdf}
 \caption{Las 15 características más importantes para el modelo Random Forest, basadas en histogramas de color RGB. Los bins de histograma de los canales rojo (C1), verde (C2) y azul (C3) dominan el ranking.}
 \label{fig:importancia}
 \end{figure}
@@ -302,7 +272,7 @@ Se desarrolló un sistema de clasificación de calidad de frutas con un desempe�
 
 \subsection{Trabajo futuro}
 Las siguientes líneas de mejora se identifican:
-\begin{enumerate}[nosep]
+\begin{enumerate}
   \item Recolectar más imágenes de la clase \emph{regular} para reducir el desbalanceo.
   \item Implementar transferencia de aprendizaje con modelos pre-entrenados (ResNet, EfficientNet).
   \item Agregar estimación de tamaño absoluto mediante un objeto de referencia en la imagen.
