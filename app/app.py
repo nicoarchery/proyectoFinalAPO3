@@ -28,8 +28,8 @@ st.set_page_config(
 #   "mejorado_cnn"  - CNN (64x64)
 
 #MODEL_TYPE = "base_cnn"
-# MODEL_TYPE = "base"
-# MODEL_TYPE = "mejorado"
+#MODEL_TYPE = "base"
+#MODEL_TYPE = "mejorado"
 MODEL_TYPE = "mejorado_cnn"
 
 # ===========================================================================
@@ -159,7 +159,7 @@ def preprocesar_imagen(imagen: Image.Image, modelo_dict):
     if t == "base_cnn":
         return preprocesar_cnn(imagen, (32, 32))
     if t == "mejorado_cnn":
-        return preprocesar_cnn(imagen, (64, 64))
+        return preprocesar_cnn(imagen, (96, 96))
     raise ValueError("tipo invalido: " + t)
 
 
