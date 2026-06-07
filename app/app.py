@@ -9,7 +9,7 @@ import cv2
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 OUTPUT_DIR = Path(__file__).resolve().parent.parent / "outputs"
-OUTPUT_MEJORADO_DIR = Path(__file__).resolve().parent.parent / "outputs_mejorado"
+OUTPUT_MEJORADO_DIR = Path(__file__).resolve().parent.parent / "outputs"
 
 st.set_page_config(
     page_title="Clasificación de Calidad de Frutas",
@@ -27,10 +27,10 @@ st.set_page_config(
 #   "base_cnn"      - CNN (32x32)
 #   "mejorado_cnn"  - CNN (64x64)
 
+#MODEL_TYPE = "mejorado_cnn"
+MODEL_TYPE = "mejorado"
 #MODEL_TYPE = "base_cnn"
 #MODEL_TYPE = "base"
-#MODEL_TYPE = "mejorado"
-MODEL_TYPE = "mejorado_cnn"
 
 # ===========================================================================
 # MODEL LOADING
@@ -38,17 +38,19 @@ MODEL_TYPE = "mejorado_cnn"
 @st.cache_resource
 def cargar_modelo():
     if MODEL_TYPE == "base":
+        cfg = joblib.load(OUTPUT_DIR / "feature_config.pkl")
         return {
-            "modelo": joblib.load(OUTPUT_DIR / "best_traditional_model.pkl"),
+            "modelo": joblib.load(OUTPUT_DIR / "best_traditional_model_random_forest.pkl"),
             "encoder": joblib.load(OUTPUT_DIR / "label_encoder.pkl"),
-            "config": joblib.load(OUTPUT_DIR / "feature_config.pkl"),
+            "config": cfg,
             "tipo": "base",
             "arquitectura": "tradicional",
+            "size_percentiles": cfg.get("size_percentiles"),
         }
     if MODEL_TYPE == "mejorado":
         cfg = joblib.load(OUTPUT_MEJORADO_DIR / "feature_config.pkl")
         return {
-            "modelo": joblib.load(OUTPUT_MEJORADO_DIR / "best_traditional_model_mejorado.pkl"),
+            "modelo": joblib.load(OUTPUT_MEJORADO_DIR / "best_traditional_model_random_forest.pkl"),
             "encoder": joblib.load(OUTPUT_MEJORADO_DIR / "label_encoder.pkl"),
             "config": cfg,
             "tipo": "mejorado",
@@ -98,7 +100,7 @@ def preprocesar_tradicional_base(imagen: Image.Image):
     TARGET_SIZE = (32, 32)
     HIST_BINS = 32
     img = resize_with_padding(imagen, TARGET_SIZE)
-    arr = np.asarray(img, dtype=np.float32) / 255.0
+    arr = np.asarray(img.resize((64, 64)), dtype=np.float32) / 255.0
     features = []
     for c in range(3):
         hist, _ = np.histogram(arr[:, :, c].ravel(), bins=HIST_BINS, range=(0.0, 1.0))
@@ -119,31 +121,8 @@ def preprocesar_tradicional_mejorado(imagen: Image.Image):
         hist_features.append(hist)
     mean = arr.mean(axis=(0, 1))
     std = arr.std(axis=(0, 1))
-    img_uint8 = (arr * 255).astype(np.uint8)
-    gray = cv2.cvtColor(img_uint8, cv2.COLOR_RGB2GRAY)
-    gx = cv2.Sobel(gray, cv2.CV_32F, 1, 0, ksize=3)
-    gy = cv2.Sobel(gray, cv2.CV_32F, 0, 1, ksize=3)
-    mag = np.sqrt(gx**2 + gy**2)
-    texture_hist, _ = np.histogram(mag.ravel(), bins=16, range=(0, 255))
-    texture_hist = texture_hist.astype(np.float32) / (texture_hist.sum() + 1e-8)
-    edges = cv2.Canny(gray, 50, 150)
-    edge_density = np.mean(edges) / 255.0
-    img_array = np.asarray(imagen.convert("RGB"))
-    gray_full = cv2.cvtColor(img_array, cv2.COLOR_RGB2GRAY)
-    blurred = cv2.GaussianBlur(gray_full, (5, 5), 0)
-    _, thresh = cv2.threshold(blurred, 200, 255, cv2.THRESH_BINARY_INV)
-    kernel = np.ones((5, 5), np.uint8)
-    thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
-    thresh = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel)
-    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    area_px = 0.0
-    if contours:
-        largest = max(contours, key=cv2.contourArea)
-        area_px = float(cv2.contourArea(largest))
-    normalized_area = area_px / (IMG_SIZE[0] * IMG_SIZE[1])
     return np.concatenate([
-        np.concatenate(hist_features), mean, std, texture_hist,
-        [edge_density, normalized_area],
+        np.concatenate(hist_features), mean, std,
     ]).reshape(1, -1)
 
 def preprocesar_cnn(imagen: Image.Image, size):
@@ -152,12 +131,10 @@ def preprocesar_cnn(imagen: Image.Image, size):
 
 def preprocesar_imagen(imagen: Image.Image, modelo_dict):
     t = modelo_dict["tipo"]
-    if t == "base":
-        return preprocesar_tradicional_base(imagen)
-    if t == "mejorado":
+    if t in ("base", "mejorado"):
         return preprocesar_tradicional_mejorado(imagen)
     if t == "base_cnn":
-        return preprocesar_cnn(imagen, (32, 32))
+        return preprocesar_cnn(imagen, (64, 64))
     if t == "mejorado_cnn":
         return preprocesar_cnn(imagen, (96, 96))
     raise ValueError("tipo invalido: " + t)
@@ -206,7 +183,10 @@ def estimar_tamano(imagen: Image.Image, modelo_dict):
     t = modelo_dict["tipo"]
     if t in ("base", "base_cnn"):
         return estimar_tamano_base(imagen)
-    return estimar_tamano_mejorado(imagen, modelo_dict["size_percentiles"])
+    percentiles = modelo_dict.get("size_percentiles")
+    if percentiles is None:
+        return estimar_tamano_base(imagen)
+    return estimar_tamano_mejorado(imagen, percentiles)
 
 
 # ---------------------------------------------------------------------------
