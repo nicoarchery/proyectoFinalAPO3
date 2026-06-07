@@ -50,6 +50,22 @@ La estandarización de la clasificación de calidad tiene impacto económico dir
 \subsection{Extracción de características}
 Para el enfoque de aprendizaje tradicional, las imágenes se redimensionan a 64\,$\times$\,64\,píxeles con relleno para preservar la relación de aspecto. Se extraen histogramas de color RGB (32 bins por canal) junto con la media y desviación estándar de cada canal, produciendo un vector de 102 características por imagen~\cite{histogram_features}.
 
+\subsection{Regresión logística}
+
+La regresión logística~\cite{hosmer2013applied} es un modelo lineal generalizado diseñado para clasificación. Dado un vector de características \(\mathbf{x} \in \mathbb{R}^d\), la probabilidad de pertenencia a la clase \(k\) se modela mediante la función \emph{softmax}:
+
+\[
+P(y=k \mid \mathbf{x}) = \frac{e^{\mathbf{w}_k^\top \mathbf{x}}}{\sum_{j=1}^{K} e^{\mathbf{w}_j^\top \mathbf{x}}},
+\]
+
+donde \(K=3\) es el número de clases y \(\mathbf{w}_k\) son los pesos aprendidos. La frontera de decisión entre cualquier par de clases es lineal en el espacio de características. El entrenamiento se realiza minimizando la entropía cruzada con regularización L2 para controlar el sobreajuste:
+
+\[
+\min_{\mathbf{W}} -\frac{1}{N}\sum_{i=1}^{N} \log P(y=y_i \mid \mathbf{x}_i) + \lambda \sum_{k=1}^{K} \|\mathbf{w}_k\|_2^2.
+\]
+
+Para este problema, la regresión logística sirve como línea base (\emph{baseline}) que permite cuantificar la ganancia de los modelos no lineales.
+
 \subsection{Random Forest}
 Random Forest~\cite{breiman2001random} es un método de aprendizaje conjunto (\emph{ensemble learning}) basado en la combinación de múltiples árboles de decisión. Fue introducido por Leo Breiman en 2001 como una extensión del \emph{bagging} (Bootstrap Aggregating) que incorpora aleatoriedad tanto en los datos como en las características.
 
@@ -319,6 +335,12 @@ M. Grandini, E. Bagli y G. Visani, ``Metrics for Multi-Class Classification: an 
 \bibitem{histogram_features}
 R. C. González y R. E. Woods, \textit{Digital Image Processing}, 4th ed. Pearson, 2018.
 
+\bibitem{hosmer2013applied}
+D. W. Hosmer Jr., S. Lemeshow y R. X. Sturdivant, \textit{Applied Logistic Regression}, 3rd ed. Wiley, 2013.
+
 \end{thebibliography}
+
+\vspace{0.5cm}
+\noindent\textbf{Video de presentación del proyecto:} \url{https://youtu.be/u4sZPEVxvuo}
 
 \end{document}
